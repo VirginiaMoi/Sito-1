@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fuga dal Labirinto: Il Minotauro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --wall-color: #4a4a4a;
+            --accent-green: #2ecc71;
+            --danger-red: #e74c3c;
+            --text-color: #d1d1d1;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Special Elite', serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            width: 95%;
+            max-width: 500px;
+            height: 80vh;
+            background: var(--wall-color);
+            border: 4px solid #333;
+            border-radius: 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* Atmosfera ansiogena */
+        #vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 10px;
+            background: #222;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+
+        #timer-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--accent-green);
+            transition: width 0.1s linear;
+        }
+
+        #screen-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 5;
+        }
+
+        h2 { color: var(--accent-green); margin-top: 0; }
+
+        .btn {
+            background: var(--accent-green);
+            color: #1a1a1a;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-family: 'Special Elite', serif;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 10px;
+            width: 80%;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        input[type="text"] {
+            background: #333;
+            border: 2px solid var(--accent-green);
+            color: white;
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 15px;
+            font-family: 'Special Elite', serif;
+            text-align: center;
+        }
+
+        /* Icaro Animation */
+        .wings {
+            font-size: 50px;
+            animation: flap 0.5s infinite;
+            display: none;
+        }
+
+        @keyframes flap {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .minotaur-breath {
+            font-style: italic;
+            color: var(--danger-red);
+            font-size: 0.8rem;
+            margin-top: 20px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="vignette"></div>
+        <div id="timer-bar"><div id="timer-fill"></div></div>
+        
+        <div id="screen-content">
+            <h1>IL LABIRINTO</h1>
+            <p>Il fiato del Minotauro è alle tue spalle. Corri!</p>
+            <button class="btn" onclick="startGame()">ENTRA NEL BUIO</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let timeLeft = 100;
+        let timerInterval;
+
+        const story = [
+            {
+                text: "Ti trovi davanti a un bivio. Una voce sussurra: 'Chi ha aiutato Teseo con un filo?'",
+                answer: "arianna",
+                error: "Sbagliato! Senti gli zoccoli più vicini..."
+            },
+            {
+                text: "La strada è bloccata da una statua. 'Qual è il mostro con la testa di toro?'",
+                answer: "minotauro",
+                error: "Il mostro ruggisce! Sbrigati!"
+            },
+            {
+                text: "Un'iscrizione sul muro: 'Chi è il padre di Icaro, l'inventore del labirinto?'",
+                answer: "dedalo",
+                error: "Le pareti sembrano stringersi..."
+            }
+        ];
+
+        function startGame() {
+            currentStep = 0;
+            timeLeft = 100;
+            updateScreen();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.5;
+                document.getElementById('timer-fill').style.width = timeLeft + "%";
+                
+                if(timeLeft <= 30) {
+                    document.getElementById('timer-fill').style.backgroundColor = "var(--danger-red)";
+                }
+
+                if (timeLeft <= 0) {
+                    gameOver("Il Minotauro ti ha raggiunto nel buio.");
+                }
+            }, 100);
+        }
+
+        function updateScreen() {
+            const content = document.getElementById('screen-content');
+            if (currentStep < story.length) {
+                content.innerHTML = `
+                    <h2>Enigma ${currentStep + 1}</h2>
+                    <p>${story[currentStep].text}</p>
+                    <input type="text" id="answerInput" placeholder="Scrivi qui..." autocomplete="off">
+                    <button class="btn" onclick="checkAnswer()">RISPONDI</button>
+                    <div class="minotaur-breath">* Senti un ruggito in lontananza *</div>
+                `;
+                document.getElementById('answerInput').focus();
+            } else {
+                winGame();
+            }
+        }
+
+        function checkAnswer() {
+            const input = document.getElementById('answerInput').value.toLowerCase().trim();
+            if (input === story[currentStep].answer) {
+                currentStep++;
+                timeLeft = Math.min(timeLeft + 20, 100); // Guadagni tempo
+                updateScreen();
+            } else {
+                timeLeft -= 15; // Penalità
+                alert(story[currentStep].error);
+            }
+        }
+
+        function gameOver(msg) {
+            clearInterval(timerInterval);
+            const content = document.getElementById('screen-content');
+            content.innerHTML = `
+                <h2 style="color: var(--danger-red)">SEI MORTO</h2>
+                <p>${msg}</p>
+                <button class="btn" onclick="startGame()">RIPROVA</button>
+            `;
+        }
+
+        function winGame() {
+            clearInterval(timerInterval);
+            const content = document.getElementById('screen-content');
+            content.innerHTML = `
+                <div class="wings">🪽</div>
+                <h2 style="color: var(--accent-green)">LIBERTÀ!</h2>
+                <p>Hai trovato le ali di Icaro. Voli via dal labirinto mentre il Minotauro urla di rabbia sotto di te.</p>
+                <button class="btn" onclick="startGame()">GIOCA ANCORA</button>
+            `;
+            document.querySelector('.wings').style.display = 'block';
+        }
+
+        // Supporto per il tasto "Invio"
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && document.getElementById('answerInput')) {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
